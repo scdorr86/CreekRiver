@@ -31,4 +31,14 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+app.MapGet("/api/campsites", (CreekRiverDbContext db) =>
+{
+    return db.Campsites.ToList();
+});
+
+app.MapGet("/api/campsites/{id}", (CreekRiverDbContext db, int id) =>
+{
+    return db.Campsites.Include(c => c.CampsiteType).Single(c => c.Id == id);
+});
+
 app.Run();
