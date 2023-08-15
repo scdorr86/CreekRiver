@@ -41,4 +41,11 @@ app.MapGet("/api/campsites/{id}", (CreekRiverDbContext db, int id) =>
     return db.Campsites.Include(c => c.CampsiteType).Single(c => c.Id == id);
 });
 
+app.MapPost("/api/campsites", (CreekRiverDbContext db, Campsite campsite) =>
+{
+    db.Campsites.Add(campsite);
+    db.SaveChanges();
+    return Results.Created($"/api/campsites/{campsite.Id}", campsite);
+});
+
 app.Run();
