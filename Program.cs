@@ -111,11 +111,44 @@ app.MapDelete("/api/reservations/{id}", (CreekRiverDbContext db, int resId) =>
     }
     db.Reservations.Remove(reservation);
     db.SaveChanges();
-    //return Results.NoContent();
-    return Results.Ok(db.Reservations);
+    return Results.NoContent();
+    //return Results.Ok(db.Reservations);
 });
 
 //USER PROFILE ENDPOINTS
+app.MapGet("/api/userprofiles", (CreekRiverDbContext db) =>
+{
+    return db.UserProfiles
+    .Include(up => up.Reservations)
+    .ToList();
+});
+
+app.MapPost("/api/userprofiles", (CreekRiverDbContext db, UserProfile newUP) =>
+{
+    try
+    {
+        db.UserProfiles.Add(newUP);
+        db.SaveChanges();
+        return Results.Created($"/api/reservations/{newUP.Id}", newUP);
+    }
+    catch (DbUpdateException)
+    {
+        return Results.BadRequest("Invalid data submitted");
+    }
+});
+
+app.MapDelete("/api/userprofiles/{id}", (CreekRiverDbContext db, int upId) =>
+{
+    UserProfile profileToDelete = db.UserProfiles.SingleOrDefault(p => p.Id == upId);
+    if (profileToDelete == null)
+    {
+        return Results.NotFound();
+    }
+    db.UserProfiles.Remove(profileToDelete);
+    db.SaveChanges();
+});
+
+// CAMPSITE TYPE ENDPOINTS
 
 
 app.Run();
