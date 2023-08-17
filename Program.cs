@@ -120,6 +120,8 @@ app.MapGet("/api/userprofiles", (CreekRiverDbContext db) =>
 {
     return db.UserProfiles
     .Include(up => up.Reservations)
+    .ThenInclude(r => r.Campsite)
+    .ThenInclude(c => c.CampsiteType)
     .ToList();
 });
 
@@ -146,9 +148,67 @@ app.MapDelete("/api/userprofiles/{id}", (CreekRiverDbContext db, int upId) =>
     }
     db.UserProfiles.Remove(profileToDelete);
     db.SaveChanges();
+    return Results.Ok(db.UserProfiles);
+});
+
+app.MapPut("/api/userprofiles/{id}", (CreekRiverDbContext db, int upId, UserProfile profile) =>
+{
+    UserProfile profileToUpdate = db.UserProfiles.SingleOrDefault(p => p.Id == upId);
+    if (profileToUpdate == null)
+    {
+        return Results.NotFound();
+    }
+    profileToUpdate.FirstName = profile.FirstName;
+    profileToUpdate.LastName = profile.LastName;
+    profileToUpdate.Email = profile.Email;
+    db.SaveChanges();
+    return Results.Ok(profileToUpdate);
 });
 
 // CAMPSITE TYPE ENDPOINTS
+app.MapGet("/api/campsitetypes", (CreekRiverDbContext db) =>
+{
+    return db.CampsiteTypes;
+});
 
+app.MapDelete("/api/campsitetypes{id}", (CreekRiverDbContext db, int ctId) =>
+{
+    CampsiteType typeToDelete = db.CampsiteTypes.SingleOrDefault(ct => ct.Id == ctId);
+    if (typeToDelete == null)
+    {
+        return Results.NotFound();
+    }
+    db.CampsiteTypes.Remove(typeToDelete);
+    db.SaveChanges();
+    return Results.Ok(db.CampsiteTypes);
+});
+
+app.MapPut("/api/campsitetypes/{id}", (CreekRiverDbContext db, int ctId, CampsiteType type) =>
+{
+    CampsiteType typeToUpdate = db.CampsiteTypes.SingleOrDefault(ct => ct.Id == ctId);
+    if (typeToUpdate == null)
+    {
+        return Results.NotFound();
+    }
+    typeToUpdate.CampsiteTypeName = type.CampsiteTypeName;
+    typeToUpdate.MaxReservationDays = type.MaxReservationDays;
+    typeToUpdate.FeePerNight = type.FeePerNight;
+    db.SaveChanges();
+    return Results.Ok(typeToUpdate);
+});
+
+app.MapPost("/api/campsitetypes", (CreekRiverDbContext db, CampsiteType type) =>
+{
+    try
+    {
+        db.CampsiteTypes.Add(type);
+        db.SaveChanges();
+        return Results.Created($"/api/campsitetypes/{type.Id}", type);
+    }
+    catch (DbUpdateException)
+    {
+        return Results.BadRequest("Invalid data submitted");
+    }
+});
 
 app.Run();
